@@ -20,15 +20,19 @@ function [recons, modif, tabcrit] = cherche_modif(filename, idim, jdim, modifmin
   tabmodif = modifmin : modifmax ;
   tabcrit = zeros(1, length(tabmodif)) ;
 
-  for n = 1:length(tabmodif)
+  %%for n = 1:length(tabmodif)
   %%parfor (n = 1:length(tabmodif), 8)
-    
+  parfor (n = 1:length(tabmodif), 24)
+   
     vec_illu_mod = circshift(vec_illu, -n) ;
-    out = reconstruction_scan(vec_illu_mod, idim, jdim) ;
+    out = reconstruction_scan(vec_illu_mod, idim, jdim, i_scan, j_scan) ;
     
     out = filter2(ones(3,3)/9, out) ;
     tabcrit(n) = var(out(:)) ;
-        
+
+    %figure(10)
+    %imagesc(out)
+    %pause(0.01)
   end%for
 
   [maximum, modif] = max(tabcrit) ;

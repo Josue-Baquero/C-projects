@@ -1,9 +1,12 @@
-function out = reconstruction_scan(vec_illu, idim, jdim)
+function out = reconstruction_scan(vec_illu, idim, jdim, i_scan, j_scan)
 
 
   out = zeros(idim, jdim) ;
-  [i_scan, j_scan] = creer_scan_avec_dim(idim, jdim) ;
-
+  
+  if (nargin < 4)
+    [i_scan, j_scan] = creer_scan_avec_dim(idim, jdim) ;
+  end
+  
   len = length(i_scan) ;
   if (len ~= length(vec_illu))
     disp('ERR: erreur de dimension') ;

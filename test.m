@@ -23,7 +23,7 @@ axis image
 
 
 modifmin = 1 ;
-modifmax = 500 ;
+modifmax = 100000 ;
 
 tic
 [recons, modif, tabcrit] = cherche_modif(filename, idim, jdim, modifmin, modifmax) ;
