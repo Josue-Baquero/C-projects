@@ -99,9 +99,6 @@ int main(int argc, char **argv)
       exit(0) ;
     }
 
-  // debut chrono
-  tic(&chrono, "\nscan_modif ...") ;
-
   const int lencritere = modifmax + 1 ;
   double* vec_crit = (double*)malloc(lencritere*sizeof(double)) ;
 
@@ -114,14 +111,14 @@ int main(int argc, char **argv)
   creer_scan_avec_dim(idim, jdim, i_scan, j_scan) ;
   
   // Test SANS threads
-  tic(&chrono, "\nscan_modif SANS threads ...") ;
+  tic(&chrono, "\ncherche_modif SANS threads ...") ;
   int modif_seq = cherche_modif(vec_illu, i_scan, j_scan, lenscantotal, 
 				vec_crit, modifmax,
 				reconst, reconst_pb, idim, jdim) ;
   toc(chrono, "temps ecoule SANS threads") ;
   
   // Test AVEC threads
-  tic(&chrono, "\nscan_modif AVEC threads ...") ;
+  tic(&chrono, "\ncherche_modif AVEC threads ...") ;
   int modif = cherche_modif_th(vec_illu, i_scan, j_scan, lenscantotal, 
 			       vec_crit, modifmax,
 			       reconst, reconst_pb, idim, jdim, nbth) ;
