@@ -3,11 +3,10 @@
  ligne de compilation
  gcc cherche_modif.c -pthread -Wall -O2 -o cherche_modif
 
- C th / Matlab parfor : x12.6 plus vite
- C th / Matlab parfor new reconstruction_scan : x9.4 plus vite
- 
-
- internet: Matlab / Python: ~x4 plus vite
+ Performances avec optimisations (var_vec_bord en 1 passe):
+ - Speedup avec 4 threads : x4.0
+ - Barbara 512x512, modmax=600 : 0.16s (4 threads) vs 0.65s (séquentiel)
+ - Babar 516x420, modmax=600 : 0.14s (4 threads) vs 0.54s (séquentiel)
  
  */
 
@@ -32,12 +31,16 @@ typedef unsigned char uint8 ;
 "pour que l'image reconstruire soit correcte : \n" \
 "avec le critere: reconst -> filter2_local (3x3) -> calcul variance\n" \
 "\n" \
-"usage : scan_modif <filename_scan> <idim> <jdim> <modifMax> <nbth>\n\n" \
+"Le programme execute TOUJOURS les 2 versions pour comparaison:\n" \
+"  1) Version sequentielle (cherche_modif)\n" \
+"  2) Version multithread (cherche_modif_th avec nbth threads)\n" \
+"\n" \
+"usage : cherche_modif <filename_scan> <idim> <jdim> <modifMax> <nbth>\n\n" \
 "filename_scan : fichier pgm en ligne : (idimxjdim)x1 \n" \
 "idim          : dimension de l'image\n" \
 "jdim          : dimension de l'image\n" \
-"modifMax      : recherche entre [0, modifMax]\n\n" \
-"nbth          : nombre de thread"
+"modifMax      : recherche entre [0, modifMax]\n" \
+"nbth          : nombre de threads pour la version parallele"
 
 
 
@@ -110,14 +113,23 @@ int main(int argc, char **argv)
 
   creer_scan_avec_dim(idim, jdim, i_scan, j_scan) ;
   
-  int modif =  cherche_modif_th(vec_illu, i_scan, j_scan, lenscantotal, 
+  // Test SANS threads
+  tic(&chrono, "\nscan_modif SANS threads ...") ;
+  int modif_seq = cherche_modif(vec_illu, i_scan, j_scan, lenscantotal, 
 				vec_crit, modifmax,
-				reconst, reconst_pb, idim, jdim, nbth) ;
+				reconst, reconst_pb, idim, jdim) ;
+  toc(chrono, "temps ecoule SANS threads") ;
   
-  toc(chrono, "temps ecoule avec scan_modif") ;
+  // Test AVEC threads
+  tic(&chrono, "\nscan_modif AVEC threads ...") ;
+  int modif = cherche_modif_th(vec_illu, i_scan, j_scan, lenscantotal, 
+			       vec_crit, modifmax,
+			       reconst, reconst_pb, idim, jdim, nbth) ;
+  toc(chrono, "temps ecoule AVEC threads") ;
+  
+  printf("\nComparaison: modif_seq=%d, modif_th=%d\n", modif_seq, modif) ;
 
   /* affichage: image pgm */
-  printf("modif trouve: %d\n", modif) ;
   reconstruction_scan(vec_illu, i_scan, j_scan, lenscantotal, reconst, 0) ;
   uint82pgm("reconst_init.pgm", reconst[0], idim, jdim) ;
   reconstruction_scan(vec_illu, i_scan, j_scan, lenscantotal, reconst, modif) ;
