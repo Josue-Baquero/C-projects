@@ -8,31 +8,25 @@ typedef unsigned char uint8;
   */
 double var_vec_bord(uint8** in, int bord, int idim, int jdim)
 {
-  double var = 0;
-  double mean = 0;
+  double sum = 0;      // Somme des valeurs
+  double sum_sq = 0;   // Somme des carrés
   int count = 0;
   
-  // Calcul de la moyenne (en excluant les bords)
+  // Une seule passe : calcul de somme et somme des carrés
   for (int i = bord; i < idim - bord; i++) {
     for (int j = bord; j < jdim - bord; j++) {
-      mean += in[i][j];
+      double val = in[i][j];
+      sum += val;
+      sum_sq += val * val;
       count++;
     }
   }
   
   if (count == 0) return 0;
   
-  mean = mean / count;
-  
-  // Calcul de la variance
-  for (int i = bord; i < idim - bord; i++) {
-    for (int j = bord; j < jdim - bord; j++) {
-      double diff = in[i][j] - mean;
-      var += diff * diff;
-    }
-  }
-  
-  var = var / count;
+  // Variance = E[X²] - E[X]²
+  double mean = sum / count;
+  double var = sum_sq / count - mean * mean;
   
   return var;
 }
