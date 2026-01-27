@@ -1,7 +1,7 @@
 /*
 
  ligne de compilation
- gcc cherche_modif.c -pthread -Wall -O2 -o scan_modif
+ gcc cherche_modif.c -pthread -Wall -O2 -o cherche_modif
 
  C th / Matlab parfor : x12.6 plus vite
  C th / Matlab parfor new reconstruction_scan : x9.4 plus vite
