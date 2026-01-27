@@ -256,8 +256,32 @@ int reconstruction_scan(uint8* vec_illu, int* i_scan, int* j_scan, int len,
  */
 void filter2D_local(uint8** in, uint8** out, int idim, int jdim)
 {
-     /* A COMPLETER */
- 
+  // Filtre moyenneur 3x3
+  // Ne traite pas les bords (i=0, i=idim-1, j=0, j=jdim-1)
+  
+  for (int i = 1; i < idim-1; i++) {
+    for (int j = 1; j < jdim-1; j++) {
+      // Somme des 9 pixels voisins
+      int sum = 0;
+      for (int di = -1; di <= 1; di++) {
+        for (int dj = -1; dj <= 1; dj++) {
+          sum += in[i+di][j+dj];
+        }
+      }
+      // Moyenne : division par 9
+      out[i][j] = sum / 9;
+    }
+  }
+  
+  // Copier les bords sans modification
+  for (int j = 0; j < jdim; j++) {
+    out[0][j] = in[0][j];           // première ligne
+    out[idim-1][j] = in[idim-1][j]; // dernière ligne
+  }
+  for (int i = 0; i < idim; i++) {
+    out[i][0] = in[i][0];           // première colonne
+    out[i][jdim-1] = in[i][jdim-1]; // dernière colonne
+  }
 }
 
 
@@ -267,11 +291,33 @@ void filter2D_local(uint8** in, uint8** out, int idim, int jdim)
   */
 double var_vec_bord(uint8** in, int bord, int idim, int jdim)
 {
-  double var = 0 ;
-
-    /* A COMPLETER */
- 
-  return var ;
+  double var = 0;
+  double mean = 0;
+  int count = 0;
+  
+  // Calcul de la moyenne (en excluant les bords)
+  for (int i = bord; i < idim - bord; i++) {
+    for (int j = bord; j < jdim - bord; j++) {
+      mean += in[i][j];
+      count++;
+    }
+  }
+  
+  if (count == 0) return 0;
+  
+  mean = mean / count;
+  
+  // Calcul de la variance
+  for (int i = bord; i < idim - bord; i++) {
+    for (int j = bord; j < jdim - bord; j++) {
+      double diff = in[i][j] - mean;
+      var += diff * diff;
+    }
+  }
+  
+  var = var / count;
+  
+  return var;
 } 
 
 
@@ -324,8 +370,17 @@ int cherche_modif(uint8* vec_illu, int* i_scan, int* j_scan, int lenscan,
 
 struct arg_fnc_calcul_crit
 {
-     /* A COMPLETER */
- 
+  uint8* vec_illu;
+  int* i_scan;
+  int* j_scan;
+  int lenscan;
+  double* vec_crit;
+  int modmin;
+  int modmax;
+  uint8** reconst;
+  uint8** reconst_pb;
+  int idim;
+  int jdim;
 } ;
 
 
@@ -333,8 +388,9 @@ void* calcul_crit_th(void* argin)
 {
   struct arg_fnc_calcul_crit* arg = (struct arg_fnc_calcul_crit*)argin ;
 
-  /* A COMPLETER */
- 
+  calcul_crit(arg->vec_illu, arg->i_scan, arg->j_scan, arg->lenscan,
+              arg->vec_crit, arg->modmin, arg->modmax,
+              arg->reconst, arg->reconst_pb, arg->idim, arg->jdim);
  
   pthread_exit(0) ;
 }
@@ -353,9 +409,21 @@ int cherche_modif_th(uint8* vec_illu, int* i_scan, int* j_scan, int lenscan,
   for (int i=1; i<nbth; i++)
   {
     // conf arg
-    /* A COMPLETER */
+    arg[i].vec_illu = vec_illu;
+    arg[i].i_scan = i_scan;
+    arg[i].j_scan = j_scan;
+    arg[i].lenscan = lenscan;
+    arg[i].vec_crit = vec_crit;
+    arg[i].modmin = i * (modmax / nbth);
+    arg[i].modmax = (i + 1) * (modmax / nbth) - 1;
+    arg[i].idim = idim;
+    arg[i].jdim = jdim;
     
-    // if (i == nbth-1) arg[i].modmax = modmax ;
+    // Allouer des buffers séparés pour chaque thread
+    arg[i].reconst = alloue_2D_char(idim, jdim);
+    arg[i].reconst_pb = alloue_2D_char(idim, jdim);
+    
+    if (i == nbth-1) arg[i].modmax = modmax ;
   
     // on lance le thread
     pthread_create(&tab_thread[i], NULL, calcul_crit_th, &arg[i]);
@@ -370,6 +438,10 @@ int cherche_modif_th(uint8* vec_illu, int* i_scan, int* j_scan, int lenscan,
   {
     // Attend la fin des threads
     pthread_join(tab_thread[i], NULL);
+    
+    // Libérer les buffers alloués pour ce thread
+    free_2D_char(arg[i].reconst);
+    free_2D_char(arg[i].reconst_pb);
   }
   
   
