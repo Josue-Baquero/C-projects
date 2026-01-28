@@ -40,7 +40,7 @@ typedef unsigned char uint8 ;
 "idim          : dimension de l'image\n" \
 "jdim          : dimension de l'image\n" \
 "modifMax      : recherche entre [0, modifMax]\n" \
-"nbth          : nombre de threads pour la version parallele"
+"nbth          : nombre de threads pour la version parallele\n"
 
 
 
